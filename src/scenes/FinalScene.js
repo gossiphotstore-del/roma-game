@@ -59,10 +59,10 @@ class FinalScene extends Phaser.Scene {
     // END_BLOCK_GROUND_STRIP
 
     // START_BLOCK_FLAG: Финишный флаг
-    var flagX = C.GAME_WIDTH - 120;
+    var flagX = C.GAME_WIDTH - 140;
     var flagY = C.GROUND_Y;
     this._flagSprite = this.add.image(flagX, flagY, C.ASSETS.FLAG)
-      .setDisplaySize(80, 120)
+      .setDisplaySize(156, 234)
       .setOrigin(0.5, 1)
       .setDepth(4);
 
@@ -74,10 +74,10 @@ class FinalScene extends Phaser.Scene {
     // END_BLOCK_FLAG
 
     // START_BLOCK_GIRL: Девушка у подножия флага
-    var girlX = flagX + 60;
+    var girlX = flagX + 80;
     var girlY = C.GROUND_Y;
     this._girlSprite = this.add.image(girlX, girlY, C.ASSETS.GIRL)
-      .setDisplaySize(80, 120)
+      .setDisplaySize(156, 234)
       .setOrigin(0.5, 1)
       .setDepth(5);
 
@@ -93,19 +93,19 @@ class FinalScene extends Phaser.Scene {
     // END_BLOCK_GIRL
 
     // START_BLOCK_PLAYER: Роман (багги) въезжает слева
-    this._playerSprite = this.add.image(-100, C.GROUND_Y, C.ASSETS.PLAYER)
-      .setDisplaySize(120, 76)
+    this._playerSprite = this.add.image(-200, C.GROUND_Y, C.ASSETS.PLAYER)
+      .setDisplaySize(164, 104)
       .setOrigin(0.5, 1)
       .setDepth(6);
     // END_BLOCK_PLAYER
 
     // START_BLOCK_SCORE_TEXT: Счёт
-    this.add.text(cx, 28, 'Итог: ' + this._score + ' очков 🏆', {
+    this.add.text(cx, 32, 'Итог: ' + this._score + ' очков 🏆', {
       fontFamily:      'Arial Black',
-      fontSize:        '22px',
+      fontSize:        '30px',
       color:           '#f0c040',
       stroke:          '#000',
-      strokeThickness: 4
+      strokeThickness: 6
     }).setOrigin(0.5).setDepth(10);
     // END_BLOCK_SCORE_TEXT
 
@@ -121,8 +121,8 @@ class FinalScene extends Phaser.Scene {
   // START_FUNCTION__startEntry
   _startEntry() {
     var C      = GameConstants;
-    var flagX  = C.GAME_WIDTH - 120;
-    var stopX  = flagX - 90;
+    var flagX  = C.GAME_WIDTH - 140;
+    var stopX  = flagX - 180;
 
     // START_BLOCK_DRIVE_IN: Роман едет к флагу
     this.tweens.add({
@@ -166,10 +166,10 @@ class FinalScene extends Phaser.Scene {
       GameConstants.GAME_HEIGHT / 2 - 60,
       '🏁 Финиш! 🏁', {
         fontFamily:      'Arial Black',
-        fontSize:        '42px',
+        fontSize:        '56px',
         color:           '#f0c040',
         stroke:          '#000',
-        strokeThickness: 6
+        strokeThickness: 8
       }
     ).setOrigin(0.5).setDepth(20).setAlpha(0);
 

@@ -40,7 +40,7 @@ class Obstacle {
   constructor(scene, group, x, type) {
     var C     = GameConstants;
     var key   = (type === 'barrier') ? C.ASSETS.OBSTACLE_BARRIER : C.ASSETS.OBSTACLE_ROCK;
-    var size  = (type === 'barrier') ? { w: 64, h: 112 } : { w: 88, h: 88 };
+    var size  = (type === 'barrier') ? { w: 83, h: 146 } : { w: 114, h: 114 };
 
     // y: верх земли = C.GROUND_Y; низ спрайта должен касаться верха земли
     var y = C.GROUND_Y - size.h / 2;

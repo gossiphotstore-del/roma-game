@@ -1,5 +1,5 @@
 // FILE: src/scenes/StartScene.js
-// VERSION: 1.1.0
+// VERSION: 1.2.0
 // START_MODULE_CONTRACT:
 // PURPOSE: Стартовый экран игры. Роман стоит на площадке, праздничный фон.
 //          По нажатию СТАРТ: багги въезжает справа, Роман «садится», переход в GameScene.
@@ -11,8 +11,8 @@
 // END_MODULE_CONTRACT
 //
 // START_CHANGE_SUMMARY:
-// LAST_CHANGE: [v1.1.0 - Фигурка Романа +50%, машинка въезжает пустой, Роман появляется в ней на ходу.]
-// PREV_CHANGE_SUMMARY: [v1.0.0 - Полная реализация. Slice 4.]
+// LAST_CHANGE: [v1.2.0 - Возврат к GitHub-версии. Текст на тёмной подложке, кнопка с чистой пульсацией (только масштаб).]
+// PREV_CHANGE_SUMMARY: [v1.1.0 - Фигурка Романа +50%, машинка въезжает пустой, Роман появляется в ней на ходу.]
 // END_CHANGE_SUMMARY
 //
 // START_MODULE_MAP:
@@ -64,28 +64,37 @@ class StartScene extends Phaser.Scene {
     // START_BLOCK_START_BUTTON: Кнопка СТАРТ (верхняя часть экрана)
     this._createStartButton(cx, C);
 
-    // START_BLOCK_TITLE: Приветственный заголовок
-    this.add.text(cx, 90, 'Привет, Роман Анатольевич!', {
+    // START_BLOCK_TITLE: Приветственный заголовок + информационная панель
+    // Панель увеличена по высоте, шрифты подняты, добавлена строка управления
+    this.add.text(cx, 90, 'Привет, Роман Анатольевич! 🎂', {
       fontFamily:      'Arial Black',
-      fontSize:        '26px',
+      fontSize:        '28px',
       color:           '#f0c040',
       stroke:          '#1a1a2e',
       strokeThickness: 5,
       align:           'center'
     }).setOrigin(0.5).setDepth(10);
 
-    this.add.text(cx, 130, '🪙 Монета +10   🍓 Клубника +25   ❤️ Сердце +50', {
+    this.add.text(cx, 138, '🪙 Монета +10      🍓 Клубника +25      ❤️ Сердце +50', {
       fontFamily:      'Arial',
-      fontSize:        '15px',
+      fontSize:        '20px',
       color:           '#ffffff',
       stroke:          '#000',
-      strokeThickness: 3
+      strokeThickness: 4
     }).setOrigin(0.5).setDepth(10);
 
-    this.add.text(cx, 160, 'Перепрыгивай препятствия! Цель — 100 очков 🏆', {
+    this.add.text(cx, 178, '🚗 Перепрыгивай препятствия!  Цель — 100 очков 🏆', {
       fontFamily:      'Arial',
-      fontSize:        '15px',
+      fontSize:        '20px',
       color:           '#aaffaa',
+      stroke:          '#000',
+      strokeThickness: 4
+    }).setOrigin(0.5).setDepth(10);
+
+    this.add.text(cx, 216, 'Тапай по экрану — чтобы совершить прыжок!', {
+      fontFamily:      'Arial',
+      fontSize:        '16px',
+      color:           '#cccccc',
       stroke:          '#000',
       strokeThickness: 3
     }).setOrigin(0.5).setDepth(10);
@@ -102,30 +111,31 @@ class StartScene extends Phaser.Scene {
 
   // START_FUNCTION__createStartButton
   _createStartButton(cx, C) {
-    var btnY = 35;
+    var btnY = 38;
 
-    var btnBg = this.add.rectangle(cx, btnY, 200, 58, 0xe53935)
+    var btnBg = this.add.rectangle(cx, btnY, 210, 60, 0xe53935)
       .setInteractive({ useHandCursor: true })
       .setDepth(10);
 
     var btnText = this.add.text(cx, btnY, '🚗  СТАРТ', {
       fontFamily:      'Arial Black',
-      fontSize:        '24px',
+      fontSize:        '26px',
       color:           '#ffffff',
       stroke:          '#7f0000',
-      strokeThickness: 3
+      strokeThickness: 4
     }).setOrigin(0.5).setDepth(11);
 
-    // Пульсирующая анимация кнопки
+    // START_BLOCK_PULSE: Чистая пульсация масштаба — без мигания и смены цвета
     this.tweens.add({
       targets:  [btnBg, btnText],
-      scaleX:   1.06,
-      scaleY:   1.06,
+      scaleX:   1.08,
+      scaleY:   1.08,
       yoyo:     true,
       repeat:   -1,
-      duration: 600,
+      duration: 620,
       ease:     'Sine.InOut'
     });
+    // END_BLOCK_PULSE
 
     btnBg.on('pointerover', function () { btnBg.setFillStyle(0xff5252); });
     btnBg.on('pointerout',  function () { btnBg.setFillStyle(0xe53935); });
@@ -140,6 +150,8 @@ class StartScene extends Phaser.Scene {
   _onStart() {
     if (this._started) { return; }
     this._started = true;
+    // Музыка стартует здесь — первый жест пользователя разблокирует AudioContext
+    if (window.MusicSystem) { window.MusicSystem.start(); }
     console.log('[BeliefState][IMP:9][StartScene][_onStart] СТАРТ нажат. Анимация въезда багги. [OK]');
     this._animateBuggyEntry();
   }

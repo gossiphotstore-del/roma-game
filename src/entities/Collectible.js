@@ -59,12 +59,12 @@ class Collectible {
     this._pts  = cfg.points;
     // END_BLOCK_TYPE_CONFIG
 
-    // y: центр спрайта, чтобы нижний край парил ~22px над землёй (сохраняем прежнюю визуальную позицию при удвоенном размере)
-    var y = C.GROUND_Y - 58;
+    // y: центр спрайта, чтобы нижний край парил ~23px над землёй
+    var y = C.GROUND_Y - 70;
 
     // START_BLOCK_CREATE_SPRITE
     this.sprite = group.create(x, y, cfg.key);
-    this.sprite.setDisplaySize(72, 72);
+    this.sprite.setDisplaySize(94, 94);
     this.sprite.refreshBody();
     this.sprite.setData('ref', this);
     this.sprite.setDepth(3);
@@ -107,10 +107,10 @@ class Collectible {
     var txt = this._scene.add.text(this.sprite.x, this.sprite.y - 10,
       '+' + this._pts, {
         fontFamily:      'Arial Black',
-        fontSize:        '20px',
+        fontSize:        '28px',
         color:           '#ffeb3b',
         stroke:          '#000',
-        strokeThickness: 4
+        strokeThickness: 5
       }).setOrigin(0.5).setDepth(15);
 
     this._scene.tweens.add({

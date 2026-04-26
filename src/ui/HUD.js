@@ -40,10 +40,10 @@ class HUD {
     // START_BLOCK_CREATE_TEXT: Создание текстового элемента
     this._text = scene.add.text(16, 16, 'Очки: 0', {
       fontFamily:      'Arial Black',
-      fontSize:        '26px',
+      fontSize:        '32px',
       color:           '#ffffff',
       stroke:          '#000000',
-      strokeThickness: 5
+      strokeThickness: 6
     }).setScrollFactor(0).setDepth(20);
 
     // Отобразить актуальный счёт сразу (на случай повторного прохождения)

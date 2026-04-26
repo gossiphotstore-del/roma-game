@@ -50,8 +50,8 @@
 
   // START_BLOCK_SCORE_VALUES
   var SCORE_COIN       = 10;
-  var SCORE_STRAWBERRY = 25;
-  var SCORE_HEART      = 50;
+  var SCORE_STRAWBERRY = 10;
+  var SCORE_HEART      = 10;
   var WIN_SCORE        = 100;  // очков для победы
   // END_BLOCK_SCORE_VALUES
 

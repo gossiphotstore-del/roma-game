@@ -57,8 +57,15 @@ class SpawnSystem {
     // Первая точка спавна — далеко впереди начальной позиции
     this._nextSpawnX = 150 + C.GAME_WIDTH + 200;
 
+    // Специальные предметы: ягодка посередине, сердечко перед финишем
+    var midStrawberry = new Collectible(scene, collectiblesGroup, C.FINISH_X / 2, 'strawberry');
+    this._collectibles.push(midStrawberry);
+
+    var endHeart = new Collectible(scene, collectiblesGroup, C.FINISH_X - 400, 'heart');
+    this._collectibles.push(endHeart);
+
     console.log('[Flow][IMP:6][SpawnSystem][constructor][Init] SpawnSystem создан. nextSpawnX=' +
-      this._nextSpawnX + ' [OK]');
+      this._nextSpawnX + ' strawberry@' + C.FINISH_X / 2 + ' heart@' + (C.FINISH_X - 400) + ' [OK]');
   }
 
   // START_FUNCTION_update
@@ -74,7 +81,7 @@ class SpawnSystem {
     var lookaheadX = playerX + C.GAME_WIDTH + 80;
 
     // START_BLOCK_SPAWN_CHECK: Спавн, если lookahead дошёл до следующей точки
-    if (lookaheadX >= this._nextSpawnX && this._nextSpawnX < C.FINISH_X - 200) {
+    if (lookaheadX >= this._nextSpawnX && this._nextSpawnX < C.FINISH_X - 600) {
       this._spawnObject(this._nextSpawnX);
       var intervalPx = Phaser.Math.Between(C.SPAWN_DIST_MIN, C.SPAWN_DIST_MAX);
       this._nextSpawnX += Math.max(intervalPx, 200);  // минимум 200px между объектами
@@ -105,18 +112,10 @@ class SpawnSystem {
       this._obstacles.push(obs);
 
     } else {
-      // Коллектибл (с шансом цепочки монет)
+      // Коллектибл — равный шанс для монеты, ягодки и сердечка
       var colType = this._pickCollectibleType();
       var col = new Collectible(this._scene, this._colGroup, x, colType);
       this._collectibles.push(col);
-
-      if (colType === 'coin' && Math.random() < 0.45) {
-        var chainLen = Phaser.Math.Between(2, 4);
-        for (var i = 1; i <= chainLen; i++) {
-          var chainCol = new Collectible(this._scene, this._colGroup, x + i * 52, 'coin');
-          this._collectibles.push(chainCol);
-        }
-      }
     }
     // END_BLOCK_CHOOSE_TYPE
   }
@@ -124,10 +123,8 @@ class SpawnSystem {
 
   // START_FUNCTION__pickCollectibleType
   _pickCollectibleType() {
-    var r = Math.random();
-    if (r < 0.60) { return 'coin';       }
-    if (r < 0.85) { return 'strawberry'; }
-    return 'heart';
+    var types = ['coin', 'strawberry', 'heart'];
+    return types[Math.floor(Math.random() * 3)];
   }
   // END_FUNCTION__pickCollectibleType
 

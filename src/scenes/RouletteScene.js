@@ -11,7 +11,8 @@
 // END_MODULE_CONTRACT
 //
 // START_CHANGE_SUMMARY:
-// LAST_CHANGE: [v3.1.0 - Роман в полный рост (150x200) рядом с барабаном; фон roman_standing удалён.]
+// LAST_CHANGE: [v3.2.0 - Размер Романа у барабана уменьшен на 30% (коэф. 1.4× вместо 2× диаметра).]
+// PREV_CHANGE_SUMMARY: [v3.1.0 - Роман в полный рост (150x200) рядом с барабаном; фон roman_standing удалён.]
 // PREV_CHANGE_SUMMARY: [v3.0.0 - Тап в любую точку экрана крутит рулетку. Крупный текст результата. Подсказка «Тапни!».]
 // PREV_CHANGE_SUMMARY: [v2.0.0 - Кнопка «Крутить!» у барабана.]
 // END_CHANGE_SUMMARY
@@ -43,6 +44,18 @@ class RouletteScene extends Phaser.Scene {
     this._spinsLeft = GameConstants.ROULETTE_SPINS;
     this._spinning  = false;
     this._ready     = false;
+
+    // Перемешиваем комплименты (Fisher-Yates), чтобы каждый показывался ровно раз
+    var arr = GameConstants.COMPLIMENTS.slice();
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    // «ты секси» всегда последний: pop() берёт с конца → на индекс 0 = последний вызов
+    var sexyPhrase = 'Рома, ты секси 😏';
+    var sexyIdx = arr.indexOf(sexyPhrase);
+    if (sexyIdx > 0) { arr.splice(sexyIdx, 1); arr.unshift(sexyPhrase); }
+    this._unusedCompliments = arr;
   }
 
   // START_FUNCTION_create
@@ -65,19 +78,19 @@ class RouletteScene extends Phaser.Scene {
     // END_BLOCK_GROUND_STRIP
 
     // START_BLOCK_TITLE
-    this.add.text(cx, 30, '🥁 Барабан удачи!', {
+    this.add.text(cx, 32, '🥁 Барабан удачи!', {
       fontFamily:      'Arial Black',
-      fontSize:        '26px',
+      fontSize:        '34px',
       color:           '#ff69b4',
       stroke:          '#000',
-      strokeThickness: 4
+      strokeThickness: 6
     }).setOrigin(0.5).setDepth(10);
     // END_BLOCK_TITLE
 
     // START_BLOCK_DRUM: Розовый барабан по центру
     this._drumBaseX = cx;
     this._drumBaseY = C.GROUND_Y - 90;
-    this._drumRadius = 88;
+    this._drumRadius = 110;
     this._drumCont = this.add.container(this._drumBaseX, this._drumBaseY).setDepth(6);
     this._drawDrum();
     // END_BLOCK_DRUM
@@ -85,9 +98,9 @@ class RouletteScene extends Phaser.Scene {
     // START_BLOCK_ROMAN: Роман стоит слева от барабана, размер в 2 раза больше диаметра барабана
     // BUG_FIX_CONTEXT: depth:5 помещал героя за барабаном (depth:6); -80 старт обрезал изображение у края.
     //                  Теперь depth:7, размер 2× диаметра барабана, старт полностью за экраном.
-    var drumDiameter = this._drumRadius * 2;              // 176px
-    var heroH        = drumDiameter * 2;                  // 352px
-    var heroW        = Math.round(heroH * 150 / 200);     // 264px (пропорция оригинала)
+    var drumDiameter = this._drumRadius * 2;              // 220px
+    var heroH        = Math.round(drumDiameter * 1.4);   // −30%: было drumDiameter*2 → 308px
+    var heroW        = Math.round(heroH * 150 / 200);     // пропорция оригинала
 
     var heroStopX  = this._drumBaseX - this._drumRadius - heroW / 2 - 15;
     var heroY      = C.GROUND_Y;
@@ -113,32 +126,32 @@ class RouletteScene extends Phaser.Scene {
     // START_BLOCK_RESULT_DISPLAY: Большая надпись-результат, скрыта изначально
     this._resultText = this.add.text(cx, cy - 30, '', {
       fontFamily:      'Arial Black',
-      fontSize:        '34px',
+      fontSize:        '46px',
       color:           '#f0c040',
       stroke:          '#000',
-      strokeThickness: 7,
-      wordWrap:        { width: 500 },
+      strokeThickness: 9,
+      wordWrap:        { width: 560 },
       align:           'center'
     }).setOrigin(0.5).setDepth(20).setAlpha(0);
     // END_BLOCK_RESULT_DISPLAY
 
     // START_BLOCK_SPINS_COUNTER: Счётчик спинов
-    this._spinsLabel = this.add.text(cx, C.GAME_HEIGHT - 22, '', {
-      fontFamily:      'Arial',
-      fontSize:        '15px',
+    this._spinsLabel = this.add.text(cx, C.GAME_HEIGHT - 24, '', {
+      fontFamily:      'Arial Black',
+      fontSize:        '26px',
       color:           '#ffaad4',
       stroke:          '#000',
-      strokeThickness: 3
+      strokeThickness: 5
     }).setOrigin(0.5).setDepth(10);
     // END_BLOCK_SPINS_COUNTER
 
     // START_BLOCK_TAP_HINT: Подсказка «Тапни!» появляется через 1200мс
-    this._tapHint = this.add.text(cx, C.GROUND_Y - 12, '👆 Тапни, чтобы крутить!', {
+    this._tapHint = this.add.text(cx, C.GROUND_Y - 14, '👆 Тапни, чтобы крутить!', {
       fontFamily:      'Arial Black',
-      fontSize:        '20px',
+      fontSize:        '32px',
       color:           '#ffffff',
       stroke:          '#000',
-      strokeThickness: 4
+      strokeThickness: 7
     }).setOrigin(0.5).setDepth(12).setAlpha(0);
 
     // Пульсация подсказки
@@ -265,8 +278,7 @@ class RouletteScene extends Phaser.Scene {
     this._spinsLeft--;
 
     var C      = GameConstants;
-    var idx    = Phaser.Math.Between(0, C.COMPLIMENTS.length - 1);
-    var result = C.COMPLIMENTS[idx];
+    var result = this._unusedCompliments.pop();
     var self   = this;
 
     this._spinsLabel.setText('Кручений осталось: ' + this._spinsLeft);
@@ -427,17 +439,17 @@ class RouletteScene extends Phaser.Scene {
       var btnX = C.GAME_WIDTH  / 2;
       var btnY = 70;
 
-      var nextBg = this.add.rectangle(btnX, btnY, 200, 50, 0xe53935)
+      var nextBg = this.add.rectangle(btnX, btnY, 240, 62, 0xe53935)
         .setDepth(25)
         .setAlpha(0)
         .setInteractive({ useHandCursor: true });
 
       var nextTxt = this.add.text(btnX, btnY, 'Дальше →', {
         fontFamily:      'Arial Black',
-        fontSize:        '22px',
+        fontSize:        '28px',
         color:           '#ffffff',
         stroke:          '#7f0000',
-        strokeThickness: 3
+        strokeThickness: 5
       }).setOrigin(0.5).setDepth(26).setAlpha(0);
 
       this.tweens.add({ targets: [nextBg, nextTxt], alpha: 1, duration: 400, delay: 200 });

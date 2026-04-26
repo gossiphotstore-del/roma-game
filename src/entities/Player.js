@@ -45,14 +45,14 @@ class Player {
     var C       = GameConstants;
     this._scene = scene;
 
-    this._isOnGround = false;
-    this._isBouncing = false;
+    this._isOnGround     = false;
+    this._lastGroundTime = 0; // время последнего касания земли (мс) — для coyote time
 
     // START_BLOCK_CREATE_SPRITE: Создание physics-спрайта
     this.sprite = scene.physics.add.sprite(x, y, C.ASSETS.PLAYER);
-    this.sprite.setDisplaySize(88, 56);
-    this.sprite.body.setSize(72, 44);
-    this.sprite.body.setOffset(8, 8);
+    this.sprite.setDisplaySize(128, 81);
+    this.sprite.body.setSize(105, 65);
+    this.sprite.body.setOffset(11, 16); // BUG_FIX_CONTEXT: offset 8→16, тело опускается к низу спрайта (колёсам). Иначе нижние 8px колёс уходили ниже земли.
     this.sprite.setCollideWorldBounds(true);
     this.sprite.body.setMaxVelocityY(800);
     this.sprite.setDepth(5);
@@ -68,9 +68,12 @@ class Player {
   // COMPLEXITY_SCORE: 3
   // END_CONTRACT
   jump() {
-    // BUG_FIX_CONTEXT: Используем body.blocked.down напрямую вместо _isOnGround,
-    // чтобы прыжок срабатывал в тот же кадр без задержки на 1 фрейм обновления флага.
-    if (!this.sprite.body.blocked.down || this._isBouncing) { return; }
+    // BUG_FIX_CONTEXT: blocked.down кратковременно сбрасывается при угловых коллизиях
+    // с препятствием (Phaser.separate() сдвигает тело вверх на долю пикселя).
+    // Coyote time (150мс) — игрок может прыгнуть пока был на земле в недавних кадрах.
+    var msSinceGround = this._scene.time.now - this._lastGroundTime;
+    if (msSinceGround > 150) { return; }
+    this._lastGroundTime = 0; // потребить окно — двойной прыжок не пройдёт
 
     this.sprite.setVelocityY(GameConstants.JUMP_VELOCITY);
     this._isOnGround = false;
@@ -89,39 +92,11 @@ class Player {
   // END_CONTRACT
   setOnGround(onGround) {
     this._isOnGround = onGround;
+    if (onGround) {
+      this._lastGroundTime = this._scene.time.now; // обновляем coyote-таймер
+    }
   }
   // END_FUNCTION_setOnGround
-
-  // START_FUNCTION_handleCollision
-  // START_CONTRACT:
-  // PURPOSE: Кратковременный отскок назад при ударе об препятствие.
-  //          После 280мс — возобновление нормальной скорости движения вперёд.
-  //          Без game over: игра не останавливается.
-  // COMPLEXITY_SCORE: 3
-  // END_CONTRACT
-  handleCollision() {
-    /**
-     * BUG_FIX_CONTEXT: Без флага _isBouncing collider срабатывает каждый фрейм,
-     * пока физические тела пересекаются, и запускает новый delayedCall на каждый фрейм.
-     * Флаг блокирует повторный вход до завершения предыдущего отскока.
-     */
-    if (this._isBouncing) { return; }
-    this._isBouncing = true;
-
-    // START_BLOCK_BOUNCE: Кратковременное движение назад
-    this.sprite.setVelocityX(-120);
-
-    this._scene.time.delayedCall(280, function () {
-      this._isBouncing = false;
-      if (this.sprite && this.sprite.active) {
-        this.sprite.setVelocityX(GameConstants.PLAYER_SPEED);
-      }
-    }, [], this);
-    // END_BLOCK_BOUNCE
-
-    console.log('[Flow][IMP:6][Player][handleCollision][Bounce] Отскок. [OK]');
-  }
-  // END_FUNCTION_handleCollision
 
   // START_FUNCTION_get_x
   get x() { return this.sprite.x; }

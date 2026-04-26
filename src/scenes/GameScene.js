@@ -52,9 +52,10 @@ class GameScene extends Phaser.Scene {
     this._inputSystem  = null;
     this._spawnSystem  = null;
     this._hud          = null;
-    this._bgTile       = null;
-    this._distText     = null;
-    this._gameOver     = false;
+    this._bgTile            = null;
+    this._distText          = null;
+    this._gameOver          = false;
+    this._lastLightningTime = 0;
 
     console.log('[Flow][IMP:5][GameScene][constructor][Init] GameScene инстанцирована. [OK]');
   }
@@ -108,8 +109,8 @@ class GameScene extends Phaser.Scene {
     // END_BLOCK_GROUND
 
     // START_BLOCK_PLAYER: Создание игрока и его коллайдер с землёй
-    // y = GROUND_Y - 28 (верх земли - половина физ. тела игрока 44px/2 = 22 + небольшой зазор)
-    this._player = new Player(this, 150, C.GROUND_Y - 28);
+    // y = GROUND_Y - 41 (спрайт 81px, полувысота 40.5 → колёса на уровне земли)
+    this._player = new Player(this, 150, C.GROUND_Y - 41);
 
     this.physics.add.collider(this._player.sprite, this._groundGroup,
       function () { this._player.setOnGround(true); }, null, this);
@@ -127,7 +128,7 @@ class GameScene extends Phaser.Scene {
     // END_BLOCK_SYSTEMS
 
     // START_BLOCK_COLLIDERS: Коллизии и overlap
-    this.physics.add.collider(
+    this.physics.add.overlap(
       this._player.sprite, this._obsGroup,
       this._onObstacleHit, null, this
     );
@@ -138,8 +139,8 @@ class GameScene extends Phaser.Scene {
     // END_BLOCK_COLLIDERS
 
     // START_BLOCK_FINISH_LINE: Флаг финиша
-    this.add.image(C.FINISH_X, C.GROUND_Y - 60, C.ASSETS.FLAG)
-      .setDisplaySize(56, 110)
+    this.add.image(C.FINISH_X, C.GROUND_Y - 165, C.ASSETS.FLAG)
+      .setDisplaySize(110, 330)
       .setDepth(3);
     // END_BLOCK_FINISH_LINE
 
@@ -150,20 +151,22 @@ class GameScene extends Phaser.Scene {
 
     // START_BLOCK_PROGRESS_TEXT: Индикатор прогресса в правом верхнем углу
     this._distText = this.add.text(C.GAME_WIDTH - 12, 16, '0%', {
-      fontFamily:      'Arial',
-      fontSize:        '18px',
+      fontFamily:      'Arial Black',
+      fontSize:        '24px',
       color:           '#ffffff',
       stroke:          '#000',
-      strokeThickness: 3
+      strokeThickness: 4
     }).setOrigin(1, 0).setScrollFactor(0).setDepth(20);
     // END_BLOCK_PROGRESS_TEXT
 
     // START_BLOCK_CONTROLS_HINT: Подсказка управления (исчезает через 3сек)
     var hint = this.add.text(C.GAME_WIDTH / 2, C.GAME_HEIGHT - 55,
       'Пробел / тап — ПРЫЖОК', {
-        fontFamily: 'Arial',
-        fontSize:   '16px',
-        color:      '#ffffffaa'
+        fontFamily:      'Arial Black',
+        fontSize:        '28px',
+        color:           '#ffffff',
+        stroke:          '#000000',
+        strokeThickness: 6
       }).setOrigin(0.5).setScrollFactor(0).setDepth(20);
 
     this.time.delayedCall(3000, function () {
@@ -227,19 +230,71 @@ class GameScene extends Phaser.Scene {
 
   // START_FUNCTION__onObstacleHit
   // START_CONTRACT:
-  // PURPOSE: Коллайдер игрок ↔ препятствие. Вызывает handleCollision() у игрока,
-  //          кратковременно подсвечивает препятствие.
-  // COMPLEXITY_SCORE: 3
+  // PURPOSE: Overlap игрок ↔ препятствие. Показывает молнии без остановки игрока.
+  //          Кулдаун 350мс предотвращает спам эффекта пока игрок внутри спрайта.
+  // COMPLEXITY_SCORE: 2
   // END_CONTRACT
   _onObstacleHit(playerSprite, obstacleSprite) {
-    this._player.handleCollision();
-    obstacleSprite.setTint(0xff4444);
-    this.time.delayedCall(300, function () {
-      if (obstacleSprite && obstacleSprite.active) { obstacleSprite.clearTint(); }
-    });
-    console.log('[Flow][IMP:6][GameScene][_onObstacleHit] Столкновение. [OK]');
+    var now = this.time.now;
+    if (now - this._lastLightningTime < 350) { return; }
+    this._lastLightningTime = now;
+    this._spawnLightning(
+      obstacleSprite.x,
+      obstacleSprite.y,
+      obstacleSprite.displayWidth,
+      obstacleSprite.displayHeight
+    );
+    console.log('[Flow][IMP:6][GameScene][_onObstacleHit] Молния. [OK]');
   }
   // END_FUNCTION__onObstacleHit
+
+  // START_FUNCTION__spawnLightning
+  // START_CONTRACT:
+  // PURPOSE: Рисует 5 zig-zag молний поверх препятствия и быстро гасит (200мс).
+  // COMPLEXITY_SCORE: 4
+  // END_CONTRACT
+  _spawnLightning(cx, cy, w, h) {
+    /**
+     * Каждый болт — ломаная линия из случайных отрезков сверху вниз препятствия.
+     * Graphics создаётся в мировых координатах — камера корректно прокручивает его.
+     */
+    var gfx = this.add.graphics().setDepth(15);
+
+    for (var i = 0; i < 5; i++) {
+      var isMain = (i === 0);
+      var color  = isMain ? 0xffffff : 0xffee00;
+      gfx.lineStyle(isMain ? 3 : 2, color, 1);
+
+      var bx = cx + Phaser.Math.Between(-Math.floor(w * 0.35), Math.floor(w * 0.35));
+      var by = cy - Math.floor(h * 0.45);
+      gfx.beginPath();
+      gfx.moveTo(bx, by);
+
+      var segs   = Phaser.Math.Between(4, 7);
+      var segH   = (h * 0.9) / segs;
+      for (var s = 0; s < segs; s++) {
+        bx += Phaser.Math.Between(-20, 20);
+        by += segH;
+        gfx.lineTo(bx, by);
+      }
+      gfx.strokePath();
+
+      // Искра на кончике болта
+      gfx.fillStyle(0xffffff, 1);
+      gfx.fillCircle(bx, by, isMain ? 4 : 2);
+    }
+
+    this.tweens.add({
+      targets:  gfx,
+      alpha:    0,
+      duration: 200,
+      ease:     'Quad.In',
+      onComplete: function (tw, tgts) {
+        if (tgts[0] && tgts[0].active) { tgts[0].destroy(); }
+      }
+    });
+  }
+  // END_FUNCTION__spawnLightning
 
   // START_FUNCTION__onCollectiblePickup
   // START_CONTRACT:
